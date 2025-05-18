@@ -164,6 +164,7 @@ def get_bel_index(rg, loc, name):
 packages = {}
 pindata = []
 variants = {}
+spine_rows = []
 
 def process_devices_db(family, device):
     devicefile = path.join(database.get_db_root(), "devices.json")
@@ -210,8 +211,12 @@ def process_pio_db(rg, device):
                 #     suffix_size += 1
                 # dqs |= int(tdqs[-suffix_size:])
             bel_idx = get_bel_index(rg, loc, pio)
-            if bel_idx is not None:
-                pindata.append((loc, bel_idx, bank, pinfunc, dqs))
+        if bel_idx is not None:
+            pindata.append((loc, bel_idx, bank, pinfunc, dqs))
+
+def process_spine_rows(chip):
+    for r in chip.global_data.get_spine_rows():
+        spine_rows.append(r)
 
 def write_database(dev_name, chip, rg, endianness):
     def write_loc(loc, sym_name):
@@ -371,6 +376,11 @@ def write_database(dev_name, chip, rg, endianness):
         bba.u16(bank, "bank")
         bba.u16(dqs, "dqsgroup")
 
+    bba.l("spine_info", "SpineInfoPOD")
+    for r in spine_rows:
+        bba.u16(r, "row")
+        bba.u16(0, "padding")
+
     bba.l("tiletype_names", "RelPtr<char>")
     for tt, idx in sorted(tiletype_names.items(), key=lambda x: x[1]):
         bba.s(tt, "name")
@@ -406,6 +416,7 @@ def write_database(dev_name, chip, rg, endianness):
     bba.r_slice("tiletype_names", len(tiletype_names), "tiletype_names")
     bba.r_slice("package_data", len(packages), "package_info")
     bba.r_slice("pio_info", len(pindata), "pio_info")
+    bba.r_slice("spine_info", len(spine_rows), "spine_info")
     bba.r_slice("tiles_info", (max_col + 1) * (max_row + 1), "tile_info")
     bba.r_slice("variant_data", len(variants), "variant_info")
 
@@ -487,6 +498,7 @@ def main():
     max_row = chip.get_max_row()
     max_col = chip.get_max_col()
     process_pio_db(rg, args.device)
+    process_spine_rows(chip)
     process_devices_db(chip.info.family, chip.info.name)
     bba = write_database(args.device, chip, rg, "le")
 

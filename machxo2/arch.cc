@@ -602,6 +602,15 @@ std::vector<WireId> Arch::getGroupWires(GroupId group) const
     return ret;
 }
 
+bool Arch::is_spine_row(int row) const
+{
+    for (auto &si : chip_info->spine_info) {
+        if (si.row == row)
+            return true;
+    }
+    return false;
+}
+
 std::vector<PipId> Arch::getGroupPips(GroupId group) const
 {
     std::vector<PipId> ret;

@@ -126,6 +126,11 @@ NPNR_PACKED_STRUCT(struct SuffixeSupportedPOD { RelPtr<char> suffix; });
 
 NPNR_PACKED_STRUCT(struct SpeedSupportedPOD { int32_t speed; });
 
+NPNR_PACKED_STRUCT(struct SpineInfoPOD {
+    int16_t row;
+    int16_t padding;
+});
+
 NPNR_PACKED_STRUCT(struct VariantInfoPOD {
     RelPtr<char> name;
     RelSlice<PackageSupportedPOD> packages;
@@ -144,6 +149,7 @@ NPNR_PACKED_STRUCT(struct ChipInfoPOD {
     RelSlice<PackageInfoPOD> package_info;
     RelSlice<PIOInfoPOD> pio_info;
     RelSlice<TileInfoPOD> tile_info;
+    RelSlice<SpineInfoPOD> spine_info;
     RelSlice<VariantInfoPOD> variants;
 });
 
@@ -959,6 +965,8 @@ struct Arch : BaseArch<ArchRanges>
         }
         NPNR_ASSERT_FALSE_STR("no tile with type " + type);
     }
+
+    bool is_spine_row(int row) const;
 
     // Apply LPF constraints to the context
     bool apply_lpf(std::string filename, std::istream &in);
